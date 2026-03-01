@@ -21,6 +21,7 @@ import { useNip05Validation } from '@/hooks/useNip05Validation';
 import { useFollowers, getAllFollowerPubkeys } from '@/hooks/useFollowers';
 import { useFollowing } from '@/hooks/useFollowing';
 import { getSafeProfileImage } from '@/lib/imageUtils';
+import { genUserName } from '@/lib/genUserName';
 import { toast } from '@/hooks/useToast';
 import { nip19 } from 'nostr-tools';
 import type { NostrMetadata } from '@nostrify/nostrify';
@@ -106,17 +107,11 @@ export function ProfileHeader({
   );
   const nip05 = metadata?.nip05;
 
-  // Get npub for fallback display
-  const npub = nip19.npubEncode(pubkey);
-  const shortNpub = `${npub.slice(0, 8)}...${npub.slice(-4)}`;
-
   // Check if we're still waiting for name to load
   const stillLoadingName = metadata?._stillLoadingName ?? false;
 
-  // Don't show generated placeholder names - show real data or truncated npub
-  // Only use display_name/name if they exist in metadata (not generated)
   const hasRealName = metadata?.display_name || metadata?.name;
-  const displayName = hasRealName || shortNpub;
+  const displayName = hasRealName || genUserName(pubkey);
   const userName = metadata?.name;
   const profileImage = getSafeProfileImage(metadata?.picture) || '/user-avatar.png';
   const about = metadata?.about;

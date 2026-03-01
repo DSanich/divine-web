@@ -21,7 +21,7 @@ export function CategoryPage() {
   const categoryName = name || '';
   const config = getCategoryConfig(categoryName);
   const [viewMode, setViewMode] = useState<ViewMode>('feed');
-  const [sortMode, setSortMode] = useState<SortMode>('hot');
+  const [sortMode, setSortMode] = useState<SortMode | undefined>('hot');
 
   const displayName = config?.label || categoryName;
   const emoji = config?.emoji || '';
@@ -115,13 +115,16 @@ export function CategoryPage() {
 
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Sort:</span>
-              <Select value={sortMode} onValueChange={(value) => setSortMode(value as SortMode)}>
-                <SelectTrigger className="w-[140px]">
+              <Select
+                value={sortMode || 'recent'}
+                onValueChange={(value) => setSortMode(value === 'recent' ? undefined : value as SortMode)}
+              >
+                <SelectTrigger className="w-[160px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {SORT_MODES.map(mode => (
-                    <SelectItem key={mode.value} value={mode.value as string}>
+                    <SelectItem key={mode.value || 'recent'} value={mode.value || 'recent'}>
                       <div className="flex items-center gap-2">
                         <mode.icon className="h-4 w-4" />
                         {mode.label}
