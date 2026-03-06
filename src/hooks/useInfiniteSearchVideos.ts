@@ -11,6 +11,7 @@ import { searchVideos } from '@/lib/funnelcakeClient';
 import { DEFAULT_FUNNELCAKE_URL } from '@/config/relays';
 import { isFunnelcakeAvailable } from '@/lib/funnelcakeHealth';
 import { debugLog } from '@/lib/debug';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 interface UseInfiniteSearchVideosOptions {
   query: string;
@@ -172,6 +173,15 @@ export function useInfiniteSearchVideos({
           }
         } catch (error) {
           debugLog('[useInfiniteSearchVideos] Funnelcake search failed, falling back to NIP-50:', error);
+          addBreadcrumb('Funnelcake video search fallback to NIP-50', 'api', {
+            query: debouncedQuery,
+            searchType: searchParams.type,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          captureException(
+            error instanceof Error ? error : new Error(`Funnelcake video search fallback: ${error}`),
+            { query: debouncedQuery, searchType: searchParams.type },
+          );
         }
       }
 

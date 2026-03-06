@@ -206,101 +206,108 @@ export function ProfileHeader({
           </Avatar>
         </div>
 
-        {/* Profile Info */}
+        {/* Profile Info + Linked Accounts side by side on desktop */}
         <div className="flex-1 min-w-0 text-center sm:text-left">
-          <div className="space-y-2">
-            <div>
-              <div className="flex items-center gap-2 justify-center sm:justify-start">
-                {stillLoadingName ? (
-                  <Skeleton className="h-8 w-32 sm:h-9 sm:w-40" data-testid="name-loading-skeleton" />
-                ) : (
-                  <h1 className="text-2xl sm:text-3xl font-bold truncate">
-                    {displayName}
-                  </h1>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  onClick={handleCopyNpub}
-                  title="Copy npub"
-                  data-testid="copy-npub-button"
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-              {/* Show NIP-05 with visual feedback based on validation state */}
-              {nip05 ? (
-                <div className="flex items-center gap-1 justify-center sm:justify-start">
-                  {/* Icon based on validation state */}
-                  {nip05State === 'loading' && (
-                    <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+          <div className="sm:flex sm:gap-6">
+            {/* Left: Name, NIP-05, Website, Bio */}
+            <div className="space-y-2 sm:flex-1 sm:min-w-0">
+              <div>
+                <div className="flex items-center gap-2 justify-center sm:justify-start">
+                  {stillLoadingName ? (
+                    <Skeleton className="h-8 w-32 sm:h-9 sm:w-40" data-testid="name-loading-skeleton" />
+                  ) : (
+                    <h1 className="text-2xl sm:text-3xl font-bold truncate">
+                      {displayName}
+                    </h1>
                   )}
-                  {nip05State === 'valid' && (
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                  )}
-                  {nip05State === 'invalid' && (
-                    <XCircle className="h-4 w-4 text-muted-foreground" />
-                  )}
-
-                  {/* NIP-05 text with styling based on state */}
-                  {(() => {
-                    const divineInfo = getDivineNip05Info(nip05);
-                    const className = `text-sm font-medium hover:underline ${
-                      nip05State === 'valid'
-                        ? 'text-primary'
-                        : nip05State === 'invalid'
-                          ? 'text-muted-foreground line-through'
-                          : 'text-muted-foreground'
-                    }`;
-                    const displayText = divineInfo
-                      ? divineInfo.displayName
-                      : nip05.startsWith('_@') ? `@${nip05.slice(2)}` : `@${nip05}`;
-
-                    return divineInfo ? (
-                      <a
-                        href={divineInfo.href}
-                        className={className}
-                      >
-                        {displayText}
-                      </a>
-                    ) : (
-                      <Link
-                        to={`/u/${encodeURIComponent(nip05)}`}
-                        className={className}
-                      >
-                        {displayText}
-                      </Link>
-                    );
-                  })()}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={handleCopyNpub}
+                    title="Copy npub"
+                    data-testid="copy-npub-button"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
                 </div>
-              ) : userName && userName !== displayName ? (
-                <p className="text-muted-foreground text-sm">@{userName}</p>
-              ) : null}
+                {/* Show NIP-05 with visual feedback based on validation state */}
+                {nip05 ? (
+                  <div className="flex items-center gap-1 justify-center sm:justify-start">
+                    {/* Icon based on validation state */}
+                    {nip05State === 'loading' && (
+                      <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+                    )}
+                    {nip05State === 'valid' && (
+                      <CheckCircle className="h-4 w-4 text-primary" />
+                    )}
+                    {nip05State === 'invalid' && (
+                      <XCircle className="h-4 w-4 text-muted-foreground" />
+                    )}
+
+                    {/* NIP-05 text with styling based on state */}
+                    {(() => {
+                      const divineInfo = getDivineNip05Info(nip05);
+                      const className = `text-sm font-medium hover:underline ${
+                        nip05State === 'valid'
+                          ? 'text-primary'
+                          : nip05State === 'invalid'
+                            ? 'text-muted-foreground line-through'
+                            : 'text-muted-foreground'
+                      }`;
+                      const displayText = divineInfo
+                        ? divineInfo.displayName
+                        : nip05.startsWith('_@') ? `@${nip05.slice(2)}` : `@${nip05}`;
+
+                      return divineInfo ? (
+                        <a
+                          href={divineInfo.href}
+                          className={className}
+                        >
+                          {displayText}
+                        </a>
+                      ) : (
+                        <Link
+                          to={`/u/${encodeURIComponent(nip05)}`}
+                          className={className}
+                        >
+                          {displayText}
+                        </Link>
+                      );
+                    })()}
+                  </div>
+                ) : userName && userName !== displayName ? (
+                  <p className="text-muted-foreground text-sm">@{userName}</p>
+                ) : null}
+              </div>
+
+              {/* Website - hide if it's just a divine.video profile URL */}
+              {website && !website.includes('divine.video/profile/') && (
+                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                  <Badge variant="outline" className="text-xs">
+                    <a href={website} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                      {website}
+                    </a>
+                  </Badge>
+                </div>
+              )}
+
+              {/* Bio */}
+              {about && (
+                <p className="text-muted-foreground text-sm leading-relaxed max-w-md">
+                  {linkifyText(about)}
+                </p>
+              )}
             </div>
 
-            {/* Website - hide if it's just a divine.video profile URL */}
-            {website && !website.includes('divine.video/profile/') && (
-              <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                <Badge variant="outline" className="text-xs">
-                  <a href={website} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                    {website}
-                  </a>
-                </Badge>
-              </div>
-            )}
+            {/* Right: Linked Accounts (fills empty space on desktop) */}
+            <div className="mt-3 sm:mt-0 sm:flex-shrink-0 sm:max-w-[240px]">
+              <LinkedAccounts pubkey={pubkey} className="justify-center sm:justify-end sm:flex-col sm:items-end" />
+            </div>
+          </div>
 
-            {/* Bio */}
-            {about && (
-              <p className="text-muted-foreground text-sm leading-relaxed max-w-md">
-                {linkifyText(about)}
-              </p>
-            )}
-
-            {/* NIP-39 Linked Accounts */}
-            <LinkedAccounts pubkey={pubkey} className="justify-center sm:justify-start" />
-
-            {/* NIP-58 Badges */}
+          {/* NIP-58 Badges - full width below */}
+          <div className="mt-2">
             <ProfileBadges badges={badgesQuery.data ?? []} className="justify-center sm:justify-start" isOwnProfile={isOwnProfile} />
           </div>
         </div>

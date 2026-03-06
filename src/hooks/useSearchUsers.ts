@@ -2,10 +2,13 @@
 // ABOUTME: Fast, ranked results with follower/video counts and NIP-05 info
 
 import { useQuery } from '@tanstack/react-query';
+import { useNostr } from '@nostrify/react';
 import { useState, useEffect } from 'react';
 import { searchProfiles, type FunnelcakeProfileResult } from '@/lib/funnelcakeClient';
 import { DEFAULT_FUNNELCAKE_URL } from '@/config/relays';
-import type { NostrMetadata } from '@nostrify/nostrify';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
+import { debugLog } from '@/lib/debug';
+import type { NostrMetadata, NostrEvent } from '@nostrify/nostrify';
 
 interface UseSearchUsersOptions {
   query: string;
@@ -35,6 +38,18 @@ function toSearchUserResult(profile: FunnelcakeProfileResult): SearchUserResult 
 }
 
 /**
+ * Parse kind:0 event into SearchUserResult
+ */
+function parseUserEvent(event: NostrEvent): SearchUserResult | null {
+  try {
+    const metadata = JSON.parse(event.content) as NostrMetadata;
+    return { pubkey: event.pubkey, metadata };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Proper debounce hook that returns a stable debounced value
  */
 function useDebouncedValue(value: string, delay: number): string {
@@ -54,9 +69,10 @@ function useDebouncedValue(value: string, delay: number): string {
 
 /**
  * Search users via Funnelcake REST API (/api/search/profiles)
- * Returns ranked results instantly instead of slow WebSocket NIP-50
+ * Falls back to NIP-50 WebSocket if Funnelcake fails
  */
 export function useSearchUsers(options: UseSearchUsersOptions) {
+  const { nostr } = useNostr();
   const { query, limit = 20 } = options;
 
   const isTest = process.env.NODE_ENV === 'test';
@@ -67,29 +83,56 @@ export function useSearchUsers(options: UseSearchUsersOptions) {
     queryFn: async ({ signal }) => {
       if (!debouncedQuery.trim()) return [];
 
-      // Request extra results so we can re-rank and still fill the limit
-      const profiles = await searchProfiles(
-        DEFAULT_FUNNELCAKE_URL,
-        debouncedQuery,
-        Math.max(limit * 2, 50),
-        signal,
+      // Try Funnelcake REST API first (fast, ranked)
+      try {
+        const profiles = await searchProfiles(
+          DEFAULT_FUNNELCAKE_URL,
+          debouncedQuery,
+          Math.max(limit * 2, 50),
+          signal,
+        );
+
+        // Re-rank: boost profiles with content above empty ones
+        const searchLower = debouncedQuery.toLowerCase();
+        profiles.sort((a, b) => {
+          const aExact = a.name.toLowerCase() === searchLower ? 1 : 0;
+          const bExact = b.name.toLowerCase() === searchLower ? 1 : 0;
+          if (aExact !== bExact) return bExact - aExact;
+
+          const aScore = a.video_count + a.follower_count;
+          const bScore = b.video_count + b.follower_count;
+          return bScore - aScore;
+        });
+
+        return profiles.slice(0, limit).map(toSearchUserResult);
+      } catch (error) {
+        debugLog('[useSearchUsers] Funnelcake profile search failed, falling back to NIP-50:', error);
+        addBreadcrumb('Funnelcake profile search fallback to NIP-50', 'api', {
+          query: debouncedQuery,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        captureException(
+          error instanceof Error ? error : new Error(`Funnelcake profile search fallback: ${error}`),
+          { query: debouncedQuery },
+        );
+      }
+
+      // Fallback: NIP-50 WebSocket search
+      const events = await nostr.query(
+        [{ kinds: [0], search: debouncedQuery, limit: Math.min(limit * 2, 100) }],
+        { signal: AbortSignal.any([signal, AbortSignal.timeout(8000)]) },
       );
 
-      // Re-rank: boost profiles with content above empty ones
-      const searchLower = debouncedQuery.toLowerCase();
-      profiles.sort((a, b) => {
-        // Exact name match first
-        const aExact = a.name.toLowerCase() === searchLower ? 1 : 0;
-        const bExact = b.name.toLowerCase() === searchLower ? 1 : 0;
-        if (aExact !== bExact) return bExact - aExact;
+      const seen = new Set<string>();
+      const results: SearchUserResult[] = [];
+      for (const event of events) {
+        if (seen.has(event.pubkey)) continue;
+        seen.add(event.pubkey);
+        const parsed = parseUserEvent(event);
+        if (parsed) results.push(parsed);
+      }
 
-        // Then by engagement (videos + followers)
-        const aScore = a.video_count + a.follower_count;
-        const bScore = b.video_count + b.follower_count;
-        return bScore - aScore;
-      });
-
-      return profiles.slice(0, limit).map(toSearchUserResult);
+      return results.slice(0, limit);
     },
     enabled: !!debouncedQuery.trim(),
     staleTime: 60_000,
