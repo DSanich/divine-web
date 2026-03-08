@@ -100,7 +100,6 @@ const PLATFORM_CONFIG: Record<string, PlatformConfig> = {
     profileUrl: (id) => `https://discord.com/users/${id}`,
     proofUrl: (_id, proof) => `https://discord.gg/${proof}`,
     verificationText: (npub) => [
-      `verify connecting this account with my divine account: ${npub}`,
       `Verifying that I control the following Nostr public key: "${npub}"`,
     ],
     canVerifyInBrowser: false,
