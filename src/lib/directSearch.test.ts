@@ -98,6 +98,55 @@ describe('directSearch', () => {
     });
   });
 
+  it('routes vine clip urls to the video page', () => {
+    expect(getDirectSearchTarget('https://vine.co/v/hBFP5LFKUOU')).toEqual({
+      path: buildVideoPath('hBFP5LFKUOU'),
+      entity: 'video',
+    });
+    expect(getDirectSearchTarget('hBFP5LFKUOU')).toBeNull();
+    expect(getDirectSearchTarget('https://vine.co/v/hBFP5LFKUOU?foo=bar#section')).toEqual({
+      path: buildVideoPath('hBFP5LFKUOU'),
+      entity: 'video',
+    });
+    expect(getDirectSearchTarget('https://vine.co/v/hBFP5LFKUOU/extra')).toBeNull();
+  });
+
+  it('routes vine user urls to the universal user page', () => {
+    expect(getDirectSearchTarget('https://vine.co/u/1080167736266633216')).toEqual({
+      path: '/u/1080167736266633216',
+      entity: 'profile',
+    });
+    expect(getDirectSearchTarget('1080167736266633216')).toEqual({
+      path: '/u/1080167736266633216',
+      entity: 'profile',
+    });
+    expect(getDirectSearchTarget('https://vine.co/u/1080167736266633216?foo=bar#section')).toEqual({
+      path: '/u/1080167736266633216',
+      entity: 'profile',
+    });
+    expect(getDirectSearchTarget('https://vine.co/u/1080167736266633216/extra')).toBeNull();
+  });
+
+  it('routes legacy vine profile urls to the universal user page', () => {
+    expect(getDirectSearchTarget('https://vine.co/someuser')).toEqual({
+      path: '/u/someuser',
+      entity: 'profile',
+    });
+    expect(getDirectSearchTarget('https://vine.co/someuser?foo=bar#section')).toEqual({
+      path: '/u/someuser',
+      entity: 'profile',
+    });
+  });
+
+  it('rejects reserved and nested vine paths', () => {
+    expect(getDirectSearchTarget('https://vine.co/v')).toBeNull();
+    expect(getDirectSearchTarget('https://vine.co/v/')).toBeNull();
+    expect(getDirectSearchTarget('https://vine.co/u')).toBeNull();
+    expect(getDirectSearchTarget('https://vine.co/u/')).toBeNull();
+    expect(getDirectSearchTarget('https://vine.co/about')).toBeNull();
+    expect(getDirectSearchTarget('https://vine.co/messages/compose')).toBeNull();
+  });
+
   it('detects hex ids and opaque pasted d tags for async lookup', () => {
     expect(isHexIdentifier(eventId)).toBe(true);
     expect(isLikelyOpaqueVideoIdentifier(eventId)).toBe(true);
