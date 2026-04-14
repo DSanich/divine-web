@@ -59,16 +59,16 @@ export function AccountSwitcher({ onAddAccountClick }: AccountSwitcherProps) {
   };
 
   return (
-    <div className='space-y-3'>
+    <div className='account-switcher w-full min-w-0 max-w-full space-y-3'>
       {localNsecLogin ? <LocalNsecBanner nsec={localNsecLogin.data.nsec} /> : null}
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
-          <button className='flex items-center gap-3 p-3 rounded-full hover:bg-accent transition-all w-full text-foreground'>
+          <button className='flex w-full min-w-0 items-center gap-3 rounded-full p-3 text-foreground transition-all hover:bg-accent'>
             <Avatar size="md">
               <AvatarImage src={getSafeProfileImage(currentUser.metadata.picture)} alt={getDisplayName(currentUser)} />
               <AvatarFallback>{getDisplayName(currentUser).charAt(0)}</AvatarFallback>
             </Avatar>
-            <div className='flex-1 text-left hidden md:block truncate'>
+            <div className='hidden min-w-0 flex-1 truncate text-left md:block'>
               <p className='font-medium text-sm truncate'>{getDisplayName(currentUser)}</p>
             </div>
             <ChevronDown className='w-4 h-4 text-muted-foreground' />

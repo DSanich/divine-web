@@ -61,11 +61,20 @@ export function LocalNsecBanner(props: LocalNsecBannerProps) {
             Back it up now or secure it with a Divine login so you are not stuck on local storage forever.
           </p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button className="rounded-full" onClick={() => void handleSecure()} type="button">
+        <div className="flex flex-col gap-2">
+          <Button
+            className="h-auto w-full whitespace-normal rounded-full py-2 text-center leading-tight"
+            onClick={() => void handleSecure()}
+            type="button"
+          >
             Secure with divine.video login
           </Button>
-          <Button className="rounded-full" onClick={() => void handleBackUp()} type="button" variant="outline">
+          <Button
+            className="h-auto w-full whitespace-normal rounded-full py-2 text-center leading-tight"
+            onClick={() => void handleBackUp()}
+            type="button"
+            variant="outline"
+          >
             Back up nsec
           </Button>
         </div>
