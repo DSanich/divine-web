@@ -1,7 +1,7 @@
 // ABOUTME: Video card component for displaying individual videos in feeds
 // ABOUTME: Shows video player, metadata, author info, and social interactions
 
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { Heart, Repeat2, MessageCircle, Share, Eye, MoreVertical, Flag, UserX, Trash2, Volume2, VolumeX, Code, Users, ListPlus, Download, Maximize2, Captions, Pin, PinOff } from 'lucide-react';
 import { nip19 } from 'nostr-tools';
 import { Card, CardContent } from '@/components/ui/card';
@@ -145,6 +145,7 @@ export function VideoCard({
   // Always start with video player visible in auto-play mode, but let VideoPlaybackContext control actual playback
   // The VideoPlayer component will only play when it's the activeVideoId (most visible)
   const [isPlaying, setIsPlaying] = useState(mode === 'auto-play');
+  const [showThumbnailDuringStartup, setShowThumbnailDuringStartup] = useState(false);
   const [showAddToListDialog, setShowAddToListDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [showReportUserDialog, setShowReportUserDialog] = useState(false);
@@ -241,7 +242,7 @@ export function VideoCard({
   const { canUseDirectMessages } = useDmCapability();
   const muteUser = useMuteItem();
   const navigate = useSubdomainNavigate();
-  const { globalMuted, setGlobalMuted } = useVideoPlayback();
+  const { activeVideoId, setActiveVideo, globalMuted, setGlobalMuted } = useVideoPlayback();
   const { cues: subtitleCues, hasSubtitles } = useSubtitles(video);
   // Subtitles default to ON when available, independent of mute state
   const [subtitlesVisible, setSubtitlesVisible] = useState(true);
@@ -330,14 +331,58 @@ export function VideoCard({
     if (mode === 'thumbnail') {
       navigate(`/video/${video.id}`, { ownerPubkey: video.pubkey });
     } else {
+      setActiveVideo(video.id);
       setIsPlaying(true);
       onPlay?.();
     }
   };
 
+  const handleThumbnailPlayButtonClick = () => {
+    setActiveVideo(video.id);
+    setIsPlaying(true);
+    setShowThumbnailDuringStartup(mode === 'thumbnail');
+    onPlay?.();
+  };
+
   const handleVideoEnd = () => {
     if (mode === 'thumbnail') {
+      if (activeVideoId === video.id) {
+        setActiveVideo(null);
+      }
       setIsPlaying(false);
+      setShowThumbnailDuringStartup(false);
+    }
+  };
+
+  useEffect(() => {
+    if (mode !== 'thumbnail') {
+      return;
+    }
+
+    if (isPlaying && activeVideoId !== null && activeVideoId !== video.id) {
+      setIsPlaying(false);
+      setShowThumbnailDuringStartup(false);
+    }
+  }, [activeVideoId, isPlaying, mode, video.id]);
+
+  useEffect(() => {
+    if (!isPlaying) {
+      setShowThumbnailDuringStartup(false);
+    }
+  }, [isPlaying]);
+
+  const handlePlaybackStarted = () => {
+    setShowThumbnailDuringStartup(false);
+    onPlaybackStarted?.();
+  };
+
+  const handleVideoError = () => {
+    setShowThumbnailDuringStartup(false);
+    // If MP4 failed and we haven't tried HLS yet, retry with HLS fallback
+    if (!mp4Failed && !effectiveHlsUrl && video.videoUrl?.includes('media.divine.video')) {
+      setMp4Failed(true);
+    } else {
+      setVideoError(true);
     }
   };
 
@@ -523,38 +568,46 @@ export function VideoCard({
                   duration={video.duration}
                   className="w-full h-full"
                   onClick={handleThumbnailClick}
+                  onPlayButtonClick={handleThumbnailPlayButtonClick}
                   onError={() => setVideoError(true)}
                   onVideoDimensions={handleThumbnailDimensions}
                 />
               ) : !videoError ? (
-                <VideoPlayer
-                  videoId={video.id}
-                  src={video.videoUrl}
-                  hlsUrl={effectiveHlsUrl}
-                  fallbackUrls={video.fallbackVideoUrls}
-                  poster={video.thumbnailUrl}
-                  blurhash={video.blurhash}
-                  isPriority={isPriority}
-                  className="w-full h-full"
-                  onLoadStart={() => setVideoError(false)}
-                  onError={() => {
-                    // If MP4 failed and we haven't tried HLS yet, retry with HLS fallback
-                    if (!mp4Failed && !effectiveHlsUrl && video.videoUrl?.includes('media.divine.video')) {
-                      setMp4Failed(true);
-                    } else {
-                      setVideoError(true);
-                    }
-                  }}
-                  onEnded={handleVideoEnd}
-                  onLoadedData={onLoadedData}
-                  onPlaybackStarted={onPlaybackStarted}
-                  onVideoDimensions={handleVideoDimensions}
-                  subtitleCues={subtitleCues}
-                  subtitlesVisible={showSubtitles}
-                  videoData={video}
-                  trafficSource={trafficSource}
-                  objectFit={isClassicVine ? 'cover' : 'contain'}
-                />
+                <>
+                  <VideoPlayer
+                    videoId={video.id}
+                    src={video.videoUrl}
+                    hlsUrl={effectiveHlsUrl}
+                    fallbackUrls={video.fallbackVideoUrls}
+                    poster={video.thumbnailUrl}
+                    blurhash={video.blurhash}
+                    isPriority={isPriority}
+                    className="w-full h-full"
+                    onLoadStart={() => setVideoError(false)}
+                    onError={handleVideoError}
+                    onEnded={handleVideoEnd}
+                    onLoadedData={onLoadedData}
+                    onPlaybackStarted={handlePlaybackStarted}
+                    onVideoDimensions={handleVideoDimensions}
+                    subtitleCues={subtitleCues}
+                    subtitlesVisible={showSubtitles}
+                    videoData={video}
+                    trafficSource={trafficSource}
+                    objectFit={isClassicVine ? 'cover' : 'contain'}
+                  />
+                  {mode === 'thumbnail' && showThumbnailDuringStartup && (
+                    <div className="absolute inset-0 z-20 pointer-events-none">
+                      <ThumbnailPlayer
+                        videoId={video.id}
+                        src={video.videoUrl}
+                        thumbnailUrl={video.thumbnailUrl}
+                        duration={video.duration}
+                        className="w-full h-full"
+                        onVideoDimensions={handleThumbnailDimensions}
+                      />
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   <p>Failed to load video</p>
