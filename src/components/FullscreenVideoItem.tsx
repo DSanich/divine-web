@@ -45,8 +45,11 @@ import { buildDmSharePayloadFromVideo, buildDmShareQueryString } from '@/lib/dm'
 interface FullscreenVideoItemProps {
   video: ParsedVideoData;
   isActive: boolean;
+  playbackId?: string;
   trafficSource?: ViewTrafficSource;
   onBack: () => void;
+  onEnded?: () => void;
+  loopPlayback?: boolean;
   onLike: () => void;
   onRepost: () => void;
   onShare: () => void;
@@ -62,7 +65,10 @@ interface FullscreenVideoItemProps {
 export function FullscreenVideoItem({
   video,
   isActive,
+  playbackId,
   onBack,
+  onEnded,
+  loopPlayback = true,
   onLike,
   onRepost,
   onShare,
@@ -160,9 +166,9 @@ export function FullscreenVideoItem({
   // Set this video as active when it becomes visible
   useEffect(() => {
     if (isActive) {
-      setActiveVideo(video.id);
+      setActiveVideo(playbackId ?? video.id);
     }
-  }, [isActive, video.id, setActiveVideo]);
+  }, [isActive, playbackId, video.id, setActiveVideo]);
 
   // Handle tap on video area to toggle play/pause
   const handleOverlayClick = useCallback(() => {
@@ -235,6 +241,7 @@ export function FullscreenVideoItem({
         {!videoError ? (
           <VideoPlayer
             videoId={video.id}
+            playbackId={playbackId}
             src={video.videoUrl}
             hlsUrl={effectiveHlsUrl}
             fallbackUrls={video.fallbackVideoUrls}
@@ -242,6 +249,8 @@ export function FullscreenVideoItem({
             blurhash={video.blurhash}
             className="w-full h-full object-contain"
             onError={() => setVideoError(true)}
+            onEnded={onEnded}
+            loopPlayback={loopPlayback}
             onSwipeRight={handleSwipeRight}
             onDoubleTap={handleDoubleTap}
             subtitleCues={subtitleCues}

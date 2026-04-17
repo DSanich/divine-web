@@ -2,16 +2,20 @@
 // ABOUTME: Verifies video loading, auth handling, and URL management
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { VideoPlayer } from './VideoPlayer';
+
+const mockRegisterVideo = vi.fn();
+const mockUnregisterVideo = vi.fn();
+const mockUpdateVideoVisibility = vi.fn();
 
 // Mock dependencies
 vi.mock('@/hooks/useVideoPlayback', () => ({
   useVideoPlayback: vi.fn(() => ({
     activeVideoId: null,
-    registerVideo: vi.fn(),
-    unregisterVideo: vi.fn(),
-    updateVideoVisibility: vi.fn(),
+    registerVideo: mockRegisterVideo,
+    unregisterVideo: mockUnregisterVideo,
+    updateVideoVisibility: mockUpdateVideoVisibility,
     globalMuted: true,
   })),
 }));
@@ -101,8 +105,20 @@ beforeEach(() => {
 });
 
 describe('VideoPlayer', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+
+    const { useVideoPlayback } = await import('@/hooks/useVideoPlayback');
+    (useVideoPlayback as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+      activeVideoId: null,
+      registerVideo: mockRegisterVideo,
+      unregisterVideo: mockUnregisterVideo,
+      updateVideoVisibility: mockUpdateVideoVisibility,
+      globalMuted: true,
+    }));
+
+    const { checkMediaAuth } = await import('@/hooks/useAdultVerification');
+    (checkMediaAuth as ReturnType<typeof vi.fn>).mockResolvedValue({ authorized: true, status: 200 });
   });
 
   afterEach(() => {
@@ -351,6 +367,119 @@ describe('VideoPlayer', () => {
       expect(screen.queryByText('Failed to load video')).not.toBeInTheDocument();
       expect(screen.getByText('Age-restricted video')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    });
+  });
+
+  describe('loop playback control', () => {
+    it('disables native and manual looping when loopPlayback is false', async () => {
+      const onEnded = vi.fn();
+      const playSpy = vi.fn().mockResolvedValue(undefined);
+      HTMLMediaElement.prototype.play = playSpy;
+
+      const { useVideoPlayback } = await import('@/hooks/useVideoPlayback');
+      (useVideoPlayback as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+        activeVideoId: 'test-no-loop',
+        registerVideo: mockRegisterVideo,
+        unregisterVideo: mockUnregisterVideo,
+        updateVideoVisibility: mockUpdateVideoVisibility,
+        globalMuted: true,
+      }));
+
+      const { container } = render(
+        <VideoPlayer
+          videoId="test-no-loop"
+          src="https://example.com/no-loop.mp4"
+          onEnded={onEnded}
+          loopPlayback={false}
+        />
+      );
+
+      const video = container.querySelector('video');
+      expect(video).not.toBeNull();
+      expect(video?.loop).toBe(false);
+
+      if (!video) {
+        throw new Error('expected rendered video element');
+      }
+
+      let currentTimeValue = 6.4;
+      Object.defineProperty(video, 'currentTime', {
+        get: () => currentTimeValue,
+        set: (value: number) => {
+          currentTimeValue = value;
+        },
+        configurable: true,
+      });
+
+      fireEvent.ended(video);
+
+      expect(onEnded).toHaveBeenCalledTimes(1);
+      expect(playSpy).not.toHaveBeenCalled();
+      expect(currentTimeValue).toBe(6.4);
+    });
+
+    it('keeps default looping behavior when loopPlayback is omitted', async () => {
+      const playSpy = vi.fn().mockResolvedValue(undefined);
+      HTMLMediaElement.prototype.play = playSpy;
+
+      const { useVideoPlayback } = await import('@/hooks/useVideoPlayback');
+      (useVideoPlayback as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+        activeVideoId: 'test-loop-default',
+        registerVideo: mockRegisterVideo,
+        unregisterVideo: mockUnregisterVideo,
+        updateVideoVisibility: mockUpdateVideoVisibility,
+        globalMuted: true,
+      }));
+
+      const { container } = render(
+        <VideoPlayer
+          videoId="test-loop-default"
+          src="https://example.com/loop-default.mp4"
+        />
+      );
+
+      const video = container.querySelector('video');
+      expect(video).not.toBeNull();
+      expect(video?.loop).toBe(true);
+
+      if (!video) {
+        throw new Error('expected rendered video element');
+      }
+
+      let currentTimeValue = 6.4;
+      Object.defineProperty(video, 'currentTime', {
+        get: () => currentTimeValue,
+        set: (value: number) => {
+          currentTimeValue = value;
+        },
+        configurable: true,
+      });
+
+      fireEvent.ended(video);
+
+      expect(playSpy).toHaveBeenCalled();
+      expect(currentTimeValue).toBe(0);
+    });
+  });
+
+  describe('playback identity separation', () => {
+    it('registers fullscreen players under playbackId instead of the shared video id', () => {
+      render(
+        <VideoPlayer
+          videoId="shared-video-id"
+          playbackId="fullscreen:shared-video-id"
+          src="https://example.com/shared-video.mp4"
+        />
+      );
+
+      expect(mockRegisterVideo).toHaveBeenCalledWith(
+        'fullscreen:shared-video-id',
+        expect.any(HTMLVideoElement)
+      );
+      expect(mockRegisterVideo).not.toHaveBeenCalledWith(
+        'shared-video-id',
+        expect.any(HTMLVideoElement)
+      );
     });
   });
 });

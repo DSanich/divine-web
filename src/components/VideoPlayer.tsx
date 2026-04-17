@@ -1,4 +1,4 @@
-// ABOUTME: Auto-looping video player component for 6-second videos
+// ABOUTME: Video player component for short-form feeds with configurable loop behavior
 // ABOUTME: Supports MP4 and GIF formats with preloading, seamless playback, and blurhash placeholders
 
 import { useRef, useEffect, useState, forwardRef, useCallback } from 'react';
@@ -27,6 +27,7 @@ const MAX_PLAYBACK_DURATION = 6.3;
 
 interface VideoPlayerProps {
   videoId: string;
+  playbackId?: string;
   src: string;
   hlsUrl?: string; // HLS manifest URL for adaptive bitrate streaming
   fallbackUrls?: string[];
@@ -36,6 +37,7 @@ interface VideoPlayerProps {
   className?: string;
   autoPlay?: boolean;
   muted?: boolean;
+  loopPlayback?: boolean;
   onLoadStart?: () => void;
   onLoadedData?: () => void;
   onPlaybackStarted?: () => void;
@@ -74,6 +76,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
   (
     {
       videoId,
+      playbackId,
       src,
       hlsUrl,
       fallbackUrls,
@@ -83,6 +86,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       className,
       autoPlay: _autoPlay = true,
       muted: _muted = true,
+      loopPlayback = true,
       onLoadStart,
       onLoadedData,
       onPlaybackStarted,
@@ -137,8 +141,9 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     const [lastTapTime, setLastTapTime] = useState(0);
     const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
+    const resolvedPlaybackId = playbackId ?? videoId;
     const { activeVideoId, registerVideo, unregisterVideo, updateVideoVisibility, globalMuted } = useVideoPlayback();
-    const isActive = activeVideoId === videoId;
+    const isActive = activeVideoId === resolvedPlaybackId;
 
     // Store context functions in refs to avoid unstable dependencies in setRefs callback
     // This prevents infinite loops when context functions change reference
@@ -216,13 +221,13 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           verboseLog(`[VideoPlayer ${videoId}] Registering video element`);
           // Set initial muted state using ref
           node.muted = globalMutedRef.current;
-          registerVideoRef.current(videoId, node);
+          registerVideoRef.current(resolvedPlaybackId, node);
         } else {
           verboseLog(`[VideoPlayer ${videoId}] Unregistering video element`);
-          unregisterVideoRef.current(videoId);
+          unregisterVideoRef.current(resolvedPlaybackId);
         }
       },
-      [videoId, inViewRef, ref] // Removed registerVideo, unregisterVideo, globalMuted - use refs instead
+      [resolvedPlaybackId, videoId, inViewRef, ref] // Removed registerVideo, unregisterVideo, globalMuted - use refs instead
     );
 
     // Set container ref
@@ -236,16 +241,16 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       if (isPriority && !entry && !hasError) {
         // Priority video: report as fully visible before observer fires
         verboseLog(`[VideoPlayer ${videoId}] Priority video: reporting immediate full visibility`);
-        updateVideoVisibility(videoId, 1.0);
+        updateVideoVisibility(resolvedPlaybackId, 1.0);
       } else if (entry && !hasError) {
         const visibilityRatio = entry.intersectionRatio;
         verboseLog(`[VideoPlayer ${videoId}] Visibility: ${(visibilityRatio * 100).toFixed(1)}%`);
-        updateVideoVisibility(videoId, visibilityRatio);
+        updateVideoVisibility(resolvedPlaybackId, visibilityRatio);
       } else if (!entry || !inView) {
         // Not visible at all
-        updateVideoVisibility(videoId, 0);
+        updateVideoVisibility(resolvedPlaybackId, 0);
       }
-    }, [entry, inView, videoId, hasError, updateVideoVisibility, isPriority]);
+    }, [entry, inView, resolvedPlaybackId, videoId, hasError, updateVideoVisibility, isPriority]);
 
     // Update playing state based on active status and control video playback
     useEffect(() => {
@@ -584,10 +589,12 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
     }, [videoId, currentUrlIndex, allUrls, hlsUrl, triedHls, onError]);
 
     const handleEnded = () => {
-      verboseLog(`[VideoPlayer ${videoId}] Video ended, auto-looping`);
+      verboseLog(
+        `[VideoPlayer ${videoId}] Video ended${loopPlayback ? ', auto-looping' : ''}`
+      );
       onEnded?.();
-      // Auto-loop by replaying
-      if (videoRef.current) {
+      // Default feed behavior loops short-form videos in place.
+      if (loopPlayback && videoRef.current) {
         videoRef.current.currentTime = 0;
         videoRef.current.play().catch((error) => {
           debugError(`[VideoPlayer ${videoId}] Failed to loop video:`, error);
@@ -603,7 +610,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       const video = videoRef.current;
       if (!video) return;
 
-      if (video.currentTime >= MAX_PLAYBACK_DURATION) {
+      if (loopPlayback && video.currentTime >= MAX_PLAYBACK_DURATION) {
         video.currentTime = 0;
       }
 
@@ -613,7 +620,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
         playbackSecondRef.current = sec;
         setPlaybackSecond(sec);
       }
-    }, []);
+    }, [loopPlayback]);
 
     // Handle age verification completion - retry video load
     const handleAgeVerified = useCallback(() => {
@@ -924,8 +931,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
         }
 
         // Clear visibility and unregister
-        updateVideoVisibility(videoId, 0);
-        unregisterVideo(videoId);
+        updateVideoVisibility(resolvedPlaybackId, 0);
+        unregisterVideo(resolvedPlaybackId);
 
         // Clean up timers
         if (longPressTimer) clearTimeout(longPressTimer);
@@ -937,7 +944,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           blobUrlRef.current = null;
         }
       };
-    }, [videoId, unregisterVideo, updateVideoVisibility, longPressTimer]);
+    }, [resolvedPlaybackId, videoId, unregisterVideo, updateVideoVisibility, longPressTimer]);
 
     // Handle GIF format (use img tag)
     const currentUrl = allUrls[currentUrlIndex] || src;
@@ -997,7 +1004,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           poster={(requiresAuth || authCheckPending) ? undefined : authenticatedPosterUrl}
           muted // Start muted, will be controlled via effect
           autoPlay={false} // Never autoplay, we control playback programmatically
-          loop
+          loop={loopPlayback}
           playsInline
           // Preload based on visibility, but once loaded, keep preload stable to avoid re-fetching
           // hasLoadedOnce prevents the preload attribute from changing and causing flashes

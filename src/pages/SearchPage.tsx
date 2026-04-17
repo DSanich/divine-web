@@ -7,7 +7,7 @@ import { useNostr } from '@nostrify/react';
 import { useSubdomainNavigate } from '@/hooks/useSubdomainNavigate';
 import { nip19 } from 'nostr-tools';
 import { useSeoMeta } from '@unhead/react';
-import { MagnifyingGlass as Search, Hash, Users, VideoCamera as Video, CircleNotch as Loader2 } from '@phosphor-icons/react';
+import { MagnifyingGlass as Search, Hash, Play, Users, VideoCamera as Video, CircleNotch as Loader2 } from '@phosphor-icons/react';
 import { trackSearch } from '@/lib/analytics';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { VideoCard } from '@/components/VideoCard';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useInfiniteSearchVideos } from '@/hooks/useInfiniteSearchVideos';
+import { useCompilationFullscreen } from '@/hooks/useCompilationFullscreen';
 import { useSearchUsers } from '@/hooks/useSearchUsers';
 import { useSearchHashtags, type HashtagResult } from '@/hooks/useSearchHashtags';
 import { getFunnelcakeBaseUrl } from '@/config/api';
@@ -40,11 +41,19 @@ import {
   isLikelyOpaqueVideoIdentifier,
   normalizeDirectSearchInput,
 } from '@/lib/directSearch';
+import {
+  buildCompilationPlaybackUrl,
+  parseCompilationPlaybackParams,
+} from '@/lib/compilationPlayback';
 
 type SearchFilter = 'all' | 'videos' | 'users' | 'hashtags';
 
 export function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const compilationRequest = useMemo(
+    () => parseCompilationPlaybackParams(searchParams),
+    [searchParams]
+  );
   const { nostr } = useNostr();
   const navigate = useSubdomainNavigate();
   const { config } = useAppContext();
@@ -133,6 +142,14 @@ export function SearchPage() {
       if (searchQuery) params.set('q', searchQuery);
       if (sortMode !== 'relevance') params.set('sort', sortMode);
       if (activeFilter !== 'all') params.set('filter', activeFilter);
+      if (compilationRequest.play) {
+        params.set('play', 'compilation');
+        if (compilationRequest.videoId) {
+          params.set('video', compilationRequest.videoId);
+        } else if (compilationRequest.start !== undefined) {
+          params.set('start', String(compilationRequest.start));
+        }
+      }
       setSearchParams(params, { replace: true });
 
       // Track search analytics when user stops typing
@@ -147,7 +164,18 @@ export function SearchPage() {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [searchQuery, sortMode, activeFilter, setSearchParams, videoResults.length, userResults.length, hashtagResults.length]);
+  }, [
+    activeFilter,
+    compilationRequest.play,
+    compilationRequest.start,
+    compilationRequest.videoId,
+    hashtagResults.length,
+    searchQuery,
+    setSearchParams,
+    sortMode,
+    userResults.length,
+    videoResults.length,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -301,6 +329,26 @@ export function SearchPage() {
 
   // Check if we have any results
   const hasResults = videoResults.length > 0 || userResults.length > 0 || hashtagResults.length > 0;
+  const showCompilationButton =
+    searchQuery.trim().length > 0 &&
+    videoResults.length > 0 &&
+    (activeFilter === 'all' || activeFilter === 'videos');
+  const compilationReturnPath = useMemo(() => {
+    const params = new URLSearchParams();
+    const trimmedQuery = searchQuery.trim();
+
+    if (trimmedQuery) params.set('q', trimmedQuery);
+    if (sortMode !== 'relevance') params.set('sort', sortMode);
+    if (activeFilter !== 'all') params.set('filter', activeFilter);
+
+    const query = params.toString();
+    return query ? `/search?${query}` : '/search';
+  }, [activeFilter, searchQuery, sortMode]);
+  const compilationUrl = showCompilationButton
+    ? buildCompilationPlaybackUrl(compilationReturnPath, {
+        start: 0,
+      })
+    : null;
 
   const searchNavigationContext = useMemo<VideoNavigationContext | undefined>(() => {
     const trimmedQuery = searchQuery.trim();
@@ -312,6 +360,13 @@ export function SearchPage() {
       sortMode,
     };
   }, [searchQuery, sortMode]);
+
+  useCompilationFullscreen({
+    videos: videoResults,
+    fetchNextPage: fetchNextVideos,
+    hasNextPage: hasNextVideos ?? false,
+    enabled: activeFilter === 'all' || activeFilter === 'videos',
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -407,7 +462,7 @@ export function SearchPage() {
 
           {/* Status message */}
           {searchQuery.trim() && (
-            <div className="text-center mb-4">
+            <div className="mb-4 flex flex-col items-center gap-3">
               {isLoading ? (
                 <p className="text-muted-foreground">Searching...</p>
               ) : error ? (
@@ -415,6 +470,18 @@ export function SearchPage() {
               ) : getResultsCount() === 0 ? (
                 <p className="text-muted-foreground">Nada. Try something different?</p>
               ) : null}
+              {compilationUrl && !isLoading && !error && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(compilationUrl)}
+                  className="gap-2"
+                >
+                  <Play className="h-4 w-4" />
+                  Play all
+                </Button>
+              )}
             </div>
           )}
 

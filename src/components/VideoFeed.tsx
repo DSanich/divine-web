@@ -2,8 +2,9 @@
 // ABOUTME: Uses video provider hook with automatic Funnelcake/WebSocket selection
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { performanceMonitor } from '@/lib/performanceMonitoring';
-import { VideoCamera as Video, CircleNotch as Loader2 } from '@phosphor-icons/react';
+import { VideoCamera as Video, CircleNotch as Loader2, Play } from '@phosphor-icons/react';
 import { VideoCardWithMetrics } from '@/components/VideoCardWithMetrics';
 import { VideoGrid } from '@/components/VideoGrid';
 import { AddToListDialog } from '@/components/AddToListDialog';
@@ -13,6 +14,7 @@ import { useContentModeration } from '@/hooks/useModeration';
 import { useFeedPerformanceInstrumentation } from '@/hooks/useFeedPerformanceInstrumentation';
 import { useProofModeEnrichment } from '@/hooks/useProofModeEnrichment';
 import { Card, CardContent, type CardAccent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import type { ParsedVideoData } from '@/types/video';
 import { debugLog, debugWarn } from '@/lib/debug';
@@ -22,6 +24,8 @@ import { useCallback } from 'react';
 import { useFullscreenFeed } from '@/contexts/FullscreenFeedContext';
 import { useVideoPlayback } from '@/hooks/useVideoPlayback';
 import { useVideoPrefetch } from '@/hooks/useVideoPrefetch';
+import { useCompilationFullscreen } from '@/hooks/useCompilationFullscreen';
+import { buildCompilationPlaybackUrl } from '@/lib/compilationPlayback';
 
 type ViewMode = 'feed' | 'grid';
 
@@ -63,13 +67,14 @@ export function VideoFeed({
   'data-hashtag-testid': hashtagTestId,
   'data-profile-testid': profileTestId,
 }: VideoFeedProps) {
+  const location = useLocation();
   const [showCommentsForVideo, setShowCommentsForVideo] = useState<string | null>(null);
   const [showListDialog, setShowListDialog] = useState<{ videoId: string; videoPubkey: string } | null>(null);
   const mountTimeRef = useRef<number | null>(null);
 
   const { checkContent } = useContentModeration();
   const navigate = useSubdomainNavigate();
-  const { setVideosForFullscreen, enterFullscreen, updateVideos } = useFullscreenFeed();
+  const { enterFullscreen } = useFullscreenFeed();
 
   // Use video provider hook - automatically selects Funnelcake or WebSocket
   const {
@@ -228,6 +233,29 @@ export function VideoFeed({
 
   // Check if we have videos but they're all filtered (before early return)
   const allFiltered = allVideos && allVideos.length > 0 && (!filteredVideos || filteredVideos.length === 0);
+  const currentSurface = `${location.pathname}${location.search}`;
+  const compilationUrl = filteredVideos.length > 0
+    ? buildCompilationPlaybackUrl(currentSurface, {
+        start: 0,
+        extraParams: {
+          sort: sortMode,
+        },
+      })
+    : null;
+  const compilationLauncher = compilationUrl ? (
+    <div className="mb-4 flex justify-end">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate(compilationUrl)}
+        className="gap-2"
+      >
+        <Play className="h-4 w-4" />
+        Play all
+      </Button>
+    </div>
+  ) : null;
 
   // Redirect empty home feed to discovery (must be before ALL early returns)
   useEffect(() => {
@@ -237,18 +265,11 @@ export function VideoFeed({
   }, [isLoading, feedType, allFiltered, navigate, filteredVideos]);
 
   // Register videos for fullscreen mode
-  useEffect(() => {
-    if (filteredVideos.length > 0) {
-      setVideosForFullscreen(filteredVideos, fetchNextPage, hasNextPage ?? false);
-    }
-  }, [filteredVideos, setVideosForFullscreen, fetchNextPage, hasNextPage]);
-
-  // Update videos in fullscreen when more are loaded
-  useEffect(() => {
-    if (filteredVideos.length > 0) {
-      updateVideos(filteredVideos);
-    }
-  }, [filteredVideos, updateVideos]);
+  useCompilationFullscreen({
+    videos: filteredVideos,
+    fetchNextPage,
+    hasNextPage: hasNextPage ?? false,
+  });
 
   // Stable callbacks for comment handling - MUST be before any early returns
   // to ensure hooks are called in the same order on every render
@@ -425,6 +446,7 @@ export function VideoFeed({
         data-hashtag-testid={hashtagTestId}
         data-profile-testid={profileTestId}
       >
+        {compilationLauncher}
         <InfiniteScroll
           dataLength={filteredVideos.length}
           next={fetchNextPage}
@@ -478,6 +500,7 @@ export function VideoFeed({
       data-hashtag-testid={hashtagTestId}
       data-profile-testid={profileTestId}
     >
+      {compilationLauncher}
       <InfiniteScroll
         dataLength={filteredVideos.length}
         next={fetchNextPage}

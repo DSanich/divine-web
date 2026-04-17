@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import type {
   ButtonHTMLAttributes,
   HTMLAttributes,
@@ -16,13 +17,19 @@ const {
   mockFetchEventById,
   mockFetchVideoById,
   mockNostrQuery,
-  mockSearchVideosData,
+  mockUseInfiniteSearchVideos,
+  mockEnterFullscreen,
+  mockSetVideosForFullscreen,
+  mockUpdateVideos,
 } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
   mockFetchEventById: vi.fn(),
   mockFetchVideoById: vi.fn(),
   mockNostrQuery: vi.fn(),
-  mockSearchVideosData: [] as Array<{ id: string; pubkey: string }>,
+  mockUseInfiniteSearchVideos: vi.fn(),
+  mockEnterFullscreen: vi.fn(),
+  mockSetVideosForFullscreen: vi.fn(),
+  mockUpdateVideos: vi.fn(),
 }));
 
 vi.mock('@unhead/react', () => ({
@@ -107,6 +114,14 @@ vi.mock('@/hooks/useSubdomainNavigate', () => ({
   useSubdomainNavigate: () => mockNavigate,
 }));
 
+vi.mock('@/contexts/FullscreenFeedContext', () => ({
+  useFullscreenFeed: () => ({
+    setVideosForFullscreen: mockSetVideosForFullscreen,
+    enterFullscreen: mockEnterFullscreen,
+    updateVideos: mockUpdateVideos,
+  }),
+}));
+
 vi.mock('@nostrify/react', () => ({
   useNostr: () => ({
     nostr: {
@@ -125,13 +140,7 @@ vi.mock('@/hooks/useAppContext', () => ({
 }));
 
 vi.mock('@/hooks/useInfiniteSearchVideos', () => ({
-  useInfiniteSearchVideos: () => ({
-    data: { pages: [{ videos: mockSearchVideosData }] },
-    fetchNextPage: vi.fn(),
-    hasNextPage: false,
-    isLoading: false,
-    error: null,
-  }),
+  useInfiniteSearchVideos: mockUseInfiniteSearchVideos,
 }));
 
 vi.mock('@/hooks/useSearchUsers', () => ({
@@ -162,14 +171,31 @@ function renderPage(initialEntries: string[] = ['/search']) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <SearchPage />
+      <LocationDisplay />
     </MemoryRouter>
+  );
+}
+
+function LocationDisplay() {
+  const location = useLocation();
+  return (
+    <div data-testid="location-display">
+      {location.pathname}
+      {location.search}
+    </div>
   );
 }
 
 describe('SearchPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSearchVideosData.length = 0;
+    mockUseInfiniteSearchVideos.mockReturnValue({
+      data: { pages: [{ videos: [] }] },
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isLoading: false,
+      error: null,
+    });
   });
 
   afterEach(() => {
@@ -310,15 +336,132 @@ describe('SearchPage', () => {
   });
 
   it('opens video results with bounded search context', async () => {
-    mockSearchVideosData.push(
-      { id: 'video-1', pubkey: 'a'.repeat(64) },
-      { id: 'video-2', pubkey: 'b'.repeat(64) },
-    );
+    mockUseInfiniteSearchVideos.mockReturnValue({
+      data: {
+        pages: [{
+          videos: [
+            { id: 'video-1', pubkey: 'a'.repeat(64) },
+            { id: 'video-2', pubkey: 'b'.repeat(64) },
+          ],
+        }],
+      },
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isLoading: false,
+      error: null,
+    });
 
     renderPage(['/search?q=twerking&filter=videos&sort=top']);
 
     fireEvent.click(screen.getAllByTestId('video-card-video-2')[0]!);
 
     expect(mockNavigate).toHaveBeenCalledWith('/video/video-2?source=search&q=twerking&sort=top&index=1');
+  });
+
+  it('renders a play-all button for video search results and navigates with source context', async () => {
+    const user = userEvent.setup();
+    mockUseInfiniteSearchVideos.mockReturnValue({
+      data: {
+        pages: [{
+          videos: [{
+            id: 'video-1',
+            pubkey: 'a'.repeat(64),
+            videoUrl: 'https://example.com/video-1.mp4',
+          }],
+        }],
+      },
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isLoading: false,
+      error: null,
+    });
+
+    renderPage(['/search?q=twerking&filter=videos']);
+
+    const button = await screen.findByRole('button', { name: /play all/i });
+    await user.click(button);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/search?q=twerking&filter=videos&play=compilation&start=0');
+  });
+
+  it('uses the live search state for returnTo even before the debounced url sync runs', async () => {
+    const user = userEvent.setup();
+    mockUseInfiniteSearchVideos.mockReturnValue({
+      data: {
+        pages: [{
+          videos: [{
+            id: 'video-1',
+            pubkey: 'a'.repeat(64),
+            videoUrl: 'https://example.com/video-1.mp4',
+          }],
+        }],
+      },
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isLoading: false,
+      error: null,
+    });
+
+    renderPage(['/search?q=vine&filter=videos']);
+
+    await user.clear(screen.getByRole('textbox'));
+    await user.type(screen.getByRole('textbox'), 'twerking');
+    await user.click(await screen.findByRole('button', { name: /play all/i }));
+
+    expect(mockNavigate).toHaveBeenCalledWith('/search?q=twerking&filter=videos&play=compilation&start=0');
+  });
+
+  it('auto-opens the existing fullscreen feed when compilation mode is present in the search url', () => {
+    mockUseInfiniteSearchVideos.mockReturnValue({
+      data: {
+        pages: [{
+          videos: [{
+            id: 'video-1',
+            pubkey: 'a'.repeat(64),
+            videoUrl: 'https://example.com/video-1.mp4',
+          }],
+        }],
+      },
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isLoading: false,
+      error: null,
+    });
+
+    renderPage(['/search?q=twerking&filter=videos&play=compilation&start=0']);
+
+    expect(mockEnterFullscreen).toHaveBeenCalledWith(
+      [expect.objectContaining({ id: 'video-1' })],
+      0,
+    );
+  });
+
+  it('preserves compilation params during the debounced search url sync', async () => {
+    vi.useFakeTimers();
+    mockUseInfiniteSearchVideos.mockReturnValue({
+      data: {
+        pages: [{
+          videos: [{
+            id: 'video-1',
+            pubkey: 'a'.repeat(64),
+            videoUrl: 'https://example.com/video-1.mp4',
+          }],
+        }],
+      },
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isLoading: false,
+      error: null,
+    });
+
+    renderPage(['/search?q=twerking&filter=videos&play=compilation&video=video-1']);
+
+    await act(async () => {
+      vi.advanceTimersByTime(600);
+    });
+
+    expect(screen.getByTestId('location-display').textContent).toBe(
+      '/search?q=twerking&filter=videos&play=compilation&video=video-1'
+    );
   });
 });
