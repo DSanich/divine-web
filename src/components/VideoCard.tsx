@@ -2,9 +2,9 @@
 // ABOUTME: Shows video player, metadata, author info, and social interactions
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { Heart, Repeat2, MessageCircle, Share, Eye, MoreVertical, Flag, UserX, Trash2, Volume2, VolumeX, Code, Users, ListPlus, Download, Maximize2, Captions, Pin, PinOff } from 'lucide-react';
+import { Heart, Repeat as Repeat2, ChatCircle as MessageCircle, Share, Eye, DotsThreeVertical as MoreVertical, Flag, UserMinus as UserX, Trash as Trash2, SpeakerHigh as Volume2, SpeakerX as VolumeX, Code, Users, ListPlus, DownloadSimple as Download, ArrowsOutSimple as Maximize2, ClosedCaptioning as Captions, PushPin as Pin, PushPinSlash as PinOff } from '@phosphor-icons/react';
 import { nip19 } from 'nostr-tools';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, type CardAccent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -80,6 +80,12 @@ interface VideoCardProps {
   navigationContext?: VideoNavigationContext;
   videoIndex?: number;
   trafficSource?: ViewTrafficSource;
+  /**
+   * Brand accent color that drives the card's offset shadow. Used to
+   * visually distinguish feed types (trending=pink, classic=violet, etc.)
+   * without changing copy or layout. Defaults to green.
+   */
+  accent?: CardAccent;
 }
 
 export function VideoCard({
@@ -106,6 +112,7 @@ export function VideoCard({
   navigationContext,
   videoIndex,
   trafficSource,
+  accent = 'green',
 }: VideoCardProps) {
   const authorData = useAuthor(video.pubkey, {
     initialName: video.authorName,
@@ -413,13 +420,13 @@ export function VideoCard({
       });
 
       toast({
-        title: 'User muted',
-        description: `${displayName} has been muted`,
+        title: 'Muted.',
+        description: `${displayName} is off your feed.`,
       });
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to mute user',
+        title: 'Mute didn\'t land.',
+        description: 'Couldn\'t save the mute. Try again?',
         variant: 'destructive',
       });
     }
@@ -446,15 +453,15 @@ export function VideoCard({
     try {
       if (isPinned) {
         await unpinVideo({ coordinate });
-        toast({ title: 'Unpinned', description: 'Video removed from your profile pins' });
+        toast({ title: 'Unpinned.', description: 'Off your profile pins.' });
       } else {
         await pinVideo({ coordinate });
-        toast({ title: 'Pinned', description: 'Video pinned to your profile' });
+        toast({ title: 'Pinned.', description: 'Up top on your profile.' });
       }
     } catch (err) {
       toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to update pin',
+        title: 'Pin snagged.',
+        description: err instanceof Error ? err.message : 'Couldn\'t update the pin. Try again?',
         variant: 'destructive',
       });
     }
@@ -463,8 +470,8 @@ export function VideoCard({
   const handleDownload = async () => {
     if (!video.videoUrl) {
       toast({
-        title: 'Error',
-        description: 'No video URL available',
+        title: 'Nothing to download.',
+        description: 'This video doesn\'t have a URL yet.',
         variant: 'destructive',
       });
       return;
@@ -486,8 +493,8 @@ export function VideoCard({
       window.URL.revokeObjectURL(url);
 
       toast({
-        title: 'Download started',
-        description: 'Your video download has begun',
+        title: 'Downloading.',
+        description: 'Saving your loop.',
       });
     } catch (error) {
       console.error('Download failed:', error);
@@ -515,7 +522,7 @@ export function VideoCard({
         />
       )}
 
-    <Card className={cn('overflow-hidden', className)}>
+    <Card variant="brand" accent={accent} className={cn('overflow-hidden', className)}>
       {/* Repost indicator - NEW: Show repost count */}
       {hasReposts && (
         <div className="flex items-center gap-2 px-4 pt-3 text-sm text-muted-foreground">
@@ -848,7 +855,7 @@ export function VideoCard({
               onClick={onLike}
               aria-label={isLiked ? "Unlike" : "Like"}
             >
-              <Heart className={cn('h-4 w-4', isLiked && 'fill-current')} />
+              <Heart className="h-4 w-4" weight={isLiked ? 'fill' : 'bold'} />
             </Button>
             {likeCount > 0 && (
               <button
@@ -879,7 +886,7 @@ export function VideoCard({
               onClick={onRepost}
               aria-label={isReposted ? "Remove repost" : "Repost"}
             >
-              <Repeat2 className={cn('h-4 w-4', isReposted && 'fill-current')} />
+              <Repeat2 className="h-4 w-4" weight={isReposted ? 'fill' : 'bold'} />
             </Button>
             {repostCount > 0 && (
               <button

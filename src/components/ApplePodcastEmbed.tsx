@@ -1,7 +1,7 @@
 // ABOUTME: Apple Podcasts embed component for displaying podcast episodes
 // ABOUTME: Creates a nice embedded player similar to Slack's podcast embeds
 
-import { ExternalLink, Play } from 'lucide-react';
+import { ArrowSquareOut as ExternalLink, Play } from '@phosphor-icons/react';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface ApplePodcastEmbedProps {
@@ -64,7 +64,7 @@ export function ApplePodcastEmbed({
                   >
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/>
                   </svg>
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <span className="text-xs font-medium text-muted-foreground">
                     Podcast Episode
                   </span>
                 </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowUp, Link2, X } from 'lucide-react';
+import { ArrowLeft, ArrowUp, LinkSimple as Link2, CircleNotch as Loader2, X } from '@phosphor-icons/react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -63,7 +63,7 @@ function MessageBubble({
                 : 'border-primary/15 bg-primary/10',
             )}
           >
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em]">
+            <div className="flex items-center gap-2 text-xs font-semibold">
               <Link2 className="h-3.5 w-3.5" />
               Vine share
             </div>
@@ -235,7 +235,7 @@ export function ConversationPage() {
 
   if (!conversationId || !peerPubkeys.length) {
     return (
-      <div className="min-h-full bg-[radial-gradient(circle_at_top,_hsl(var(--primary)/0.12),_transparent_42%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--background)))]">
+      <div className="min-h-full bg-brand-off-white dark:bg-brand-dark-green">
         <main className="container py-6">
           <div className="mx-auto max-w-3xl rounded-[32px] border border-border/80 bg-card/80 px-6 py-12 text-center shadow-sm backdrop-blur-sm">
             <p className="text-lg font-semibold text-foreground">Conversation not found</p>
@@ -251,7 +251,7 @@ export function ConversationPage() {
 
   if (!canUseDirectMessages) {
     return (
-      <div className="min-h-full bg-[radial-gradient(circle_at_top,_hsl(var(--primary)/0.12),_transparent_42%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--background)))]">
+      <div className="min-h-full bg-brand-off-white dark:bg-brand-dark-green">
         <main className="container py-6">
           <div className="mx-auto max-w-3xl rounded-[32px] border border-border/80 bg-card/80 px-6 py-12 text-center shadow-sm backdrop-blur-sm">
             <p className="text-lg font-semibold text-foreground">Direct messages are unavailable</p>
@@ -268,7 +268,7 @@ export function ConversationPage() {
   }
 
   return (
-    <div className="min-h-full bg-[radial-gradient(circle_at_top,_hsl(var(--primary)/0.14),_transparent_42%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--background)))]">
+    <div className="min-h-full bg-brand-off-white dark:bg-brand-dark-green">
       <main className="container py-6">
         <div className="mx-auto flex max-w-3xl flex-col gap-4">
           <section className="rounded-[32px] border border-border/80 bg-card/80 px-4 py-4 shadow-[0_24px_60px_rgba(39,197,139,0.08)] backdrop-blur-sm">
@@ -331,7 +331,7 @@ export function ConversationPage() {
               {share && (
                 <div className="mb-3 flex items-start justify-between gap-3 rounded-[24px] border border-primary/20 bg-primary/10 px-4 py-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                    <p className="text-xs font-semibold text-primary">
                       Ready to share
                     </p>
                     <p className="mt-1 truncate text-sm font-medium text-foreground">

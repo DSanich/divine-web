@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Save, X } from 'lucide-react';
+import { CircleNotch as Loader2, FloppyDisk as Save, X } from '@phosphor-icons/react';
 import { useToast } from '@/hooks/useToast';
 
 interface EditListDialogProps {
@@ -65,8 +65,8 @@ export function EditListDialog({ open, onClose, list }: EditListDialogProps) {
   const handleSave = async () => {
     if (!name.trim()) {
       toast({
-        title: 'Error',
-        description: 'Please enter a list name',
+        title: 'Name it.',
+        description: 'Lists need a name to exist.',
         variant: 'destructive',
       });
       return;
@@ -88,15 +88,15 @@ export function EditListDialog({ open, onClose, list }: EditListDialogProps) {
       });
 
       toast({
-        title: 'List updated',
-        description: `"${name}" has been updated successfully`,
+        title: 'List saved.',
+        description: `"${name}" is updated.`,
       });
 
       onClose();
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to update list. Please try again.',
+        title: 'Didn\'t save.',
+        description: 'List update hit a snag. Try again?',
         variant: 'destructive',
       });
     } finally {

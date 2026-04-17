@@ -7,7 +7,7 @@ import { useNostr } from '@nostrify/react';
 import { useSubdomainNavigate } from '@/hooks/useSubdomainNavigate';
 import { nip19 } from 'nostr-tools';
 import { useSeoMeta } from '@unhead/react';
-import { Search, Hash, Users, Video } from 'lucide-react';
+import { MagnifyingGlass as Search, Hash, Users, VideoCamera as Video, CircleNotch as Loader2 } from '@phosphor-icons/react';
 import { trackSearch } from '@/lib/analytics';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { VideoCard } from '@/components/VideoCard';
-import { Loader2 } from 'lucide-react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useInfiniteSearchVideos } from '@/hooks/useInfiniteSearchVideos';
 import { useSearchUsers } from '@/hooks/useSearchUsers';
@@ -325,7 +324,7 @@ export function SearchPage() {
             <Input
               ref={searchInputRef}
               type="text"
-              placeholder="Search or paste an npub, note, nevent, naddr, or d tag..."
+              placeholder="Search — or paste an npub, note, nevent, naddr, or d tag..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               onPaste={handleSearchPaste}
@@ -414,7 +413,7 @@ export function SearchPage() {
               ) : error ? (
                 <p className="text-destructive">Search error occurred</p>
               ) : getResultsCount() === 0 ? (
-                <p className="text-muted-foreground">No results found</p>
+                <p className="text-muted-foreground">Nada. Try something different?</p>
               ) : null}
             </div>
           )}
@@ -541,7 +540,7 @@ export function SearchPage() {
                 endMessage={
                   videoResults.length > 10 ? (
                     <div className="py-8 text-center text-sm text-muted-foreground">
-                      <p>No more results</p>
+                      <p>That's the whole haul.</p>
                     </div>
                   ) : null
                 }
@@ -709,12 +708,12 @@ function EmptySearchState() {
   return (
     <div className="text-center py-12">
       <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-      <h3 className="text-lg font-semibold mb-2">Search Divine Web</h3>
+      <h3 className="text-lg font-semibold mb-2">Hunt for something.</h3>
       <p className="text-muted-foreground mb-4">
-        Find videos, users, and hashtags across the Nostr network
+        Loops, people, hashtags — it's all searchable.
       </p>
       <p className="text-sm text-muted-foreground">
-        Try searching for #dance, #music, or any creator's name
+        Try #dance, #music, or a creator's name.
       </p>
     </div>
   );
@@ -729,9 +728,9 @@ function NoResultsState() {
           <div className="max-w-sm mx-auto space-y-6">
             <Search className="h-12 w-12 text-muted-foreground mx-auto" />
             <div>
-              <h3 className="text-lg font-semibold mb-2">No results found</h3>
+              <h3 className="text-lg font-semibold mb-2">Nada.</h3>
               <p className="text-muted-foreground mb-4">
-                Try different keywords
+                Try different keywords.
               </p>
             </div>
           </div>

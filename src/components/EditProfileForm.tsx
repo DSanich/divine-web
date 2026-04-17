@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Upload } from 'lucide-react';
+import { CircleNotch as Loader2, UploadSimple as Upload } from '@phosphor-icons/react';
 import { NSchema as n, type NostrMetadata } from '@nostrify/nostrify';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUploadFile } from '@/hooks/useUploadFile';
@@ -69,14 +69,14 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) =
       const [[_, url]] = await uploadFile(file);
       form.setValue(field, url);
       toast({
-        title: 'Success',
-        description: `${field === 'picture' ? 'Profile picture' : 'Banner'} uploaded successfully`,
+        title: 'Looking good.',
+        description: `${field === 'picture' ? 'Profile picture' : 'Banner'} uploaded.`,
       });
     } catch (error) {
       console.error(`Failed to upload ${field}:`, error);
       toast({
-        title: 'Error',
-        description: `Failed to upload ${field === 'picture' ? 'profile picture' : 'banner'}. Please try again.`,
+        title: 'Upload snagged.',
+        description: `Couldn't send ${field === 'picture' ? 'your profile picture' : 'your banner'}. Try again?`,
         variant: 'destructive',
       });
     }
@@ -85,8 +85,8 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) =
   const onSubmit = async (values: NostrMetadata) => {
     if (!user) {
       toast({
-        title: 'Error',
-        description: 'You must be logged in to update your profile',
+        title: 'Log in first.',
+        description: 'You need to be signed in to update your profile.',
         variant: 'destructive',
       });
       return;
@@ -119,8 +119,8 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) =
       queryClient.invalidateQueries({ queryKey: ['follow-list-safety-check'] });
 
       toast({
-        title: 'Success',
-        description: 'Your profile has been updated',
+        title: 'Profile saved.',
+        description: 'New look, locked in.',
       });
 
       // Call onSuccess callback if provided
@@ -130,8 +130,8 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) =
     } catch (error) {
       console.error('Failed to update profile:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to update your profile. Please try again.',
+        title: 'Save snagged.',
+        description: 'Couldn\'t update your profile. Try again?',
         variant: 'destructive',
       });
     }
@@ -182,7 +182,7 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) =
               <FormLabel>Bio</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Tell others about yourself"
+                  placeholder="Who are you? What are you into?"
                   className="resize-none"
                   {...field}
                 />
@@ -233,6 +233,7 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) =
 
         <Button
           type="submit"
+          variant="sticker"
           className="w-full md:w-auto"
           disabled={isPending || isUploading}
         >

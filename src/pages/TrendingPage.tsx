@@ -2,7 +2,7 @@
 // ABOUTME: Supports NIP-50 search modes: hot, top, rising, controversial
 
 import { useState } from 'react';
-import { Rss } from 'lucide-react';
+import { Rss } from '@phosphor-icons/react';
 import { useHead } from '@unhead/react';
 import { VideoFeed } from '@/components/VideoFeed';
 import { feedUrls } from '@/lib/feedUrls';
@@ -82,6 +82,7 @@ export function TrendingPage() {
         <VideoFeed
           feedType="trending"
           sortMode={sortMode}
+          accent="pink"
           data-testid="video-feed-trending"
           className="space-y-6"
         />

@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, List, Check, Loader2, ExternalLink } from 'lucide-react';
+import { Plus, List, Check, CircleNotch as Loader2, ArrowSquareOut as ExternalLink } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/useToast';
@@ -68,8 +68,8 @@ export function AddToListDialog({
       await Promise.all(promises);
 
       toast({
-        title: 'Added to lists',
-        description: `Video added to ${selectedLists.size} list${selectedLists.size !== 1 ? 's' : ''}`,
+        title: 'Stashed.',
+        description: `Added to ${selectedLists.size} list${selectedLists.size !== 1 ? 's' : ''}.`,
       });
 
       // Invalidate queries to update the UI
@@ -79,8 +79,8 @@ export function AddToListDialog({
       onClose();
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to add video to lists',
+        title: 'Didn\'t add.',
+        description: 'Couldn\'t save to your lists. Try again?',
         variant: 'destructive',
       });
     }
@@ -101,8 +101,8 @@ export function AddToListDialog({
       });
 
       toast({
-        title: 'List created',
-        description: `"${newListName}" created and video added`,
+        title: 'List created.',
+        description: `"${newListName}" is live — video's in it.`,
       });
 
       // Invalidate queries to update the UI
@@ -112,8 +112,8 @@ export function AddToListDialog({
       onClose();
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to create list',
+        title: 'Didn\'t make it.',
+        description: 'List creation hit a snag. Try again?',
         variant: 'destructive',
       });
     } finally {
@@ -264,7 +264,7 @@ export function AddToListDialog({
               <div className="text-center py-8">
                 <List className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-muted-foreground mb-4">
-                  You don't have any lists yet
+                  No lists yet. Make one and start stashing.
                 </p>
                 <Button
                   variant="outline"

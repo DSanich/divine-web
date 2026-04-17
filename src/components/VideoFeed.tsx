@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { performanceMonitor } from '@/lib/performanceMonitoring';
-import { Video } from 'lucide-react';
+import { VideoCamera as Video, CircleNotch as Loader2 } from '@phosphor-icons/react';
 import { VideoCardWithMetrics } from '@/components/VideoCardWithMetrics';
 import { VideoGrid } from '@/components/VideoGrid';
 import { AddToListDialog } from '@/components/AddToListDialog';
@@ -12,8 +12,7 @@ import { useBatchedAuthors } from '@/hooks/useBatchedAuthors';
 import { useContentModeration } from '@/hooks/useModeration';
 import { useFeedPerformanceInstrumentation } from '@/hooks/useFeedPerformanceInstrumentation';
 import { useProofModeEnrichment } from '@/hooks/useProofModeEnrichment';
-import { Card, CardContent } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Card, CardContent, type CardAccent } from '@/components/ui/card';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import type { ParsedVideoData } from '@/types/video';
 import { debugLog, debugWarn } from '@/lib/debug';
@@ -37,6 +36,12 @@ interface VideoFeedProps {
   className?: string;
   verifiedOnly?: boolean; // Filter to show only ProofMode verified videos
   mode?: 'auto-play' | 'thumbnail'; // Display mode for video cards
+  /**
+   * Brand accent color applied to each VideoCard's offset shadow.
+   * Used to give each feed type a distinct visual identity
+   * (e.g. pink = trending, violet = classics). Defaults to green.
+   */
+  accent?: CardAccent;
   'data-testid'?: string;
   'data-hashtag-testid'?: string;
   'data-profile-testid'?: string;
@@ -53,6 +58,7 @@ export function VideoFeed({
   className,
   verifiedOnly = false,
   mode = 'auto-play',
+  accent,
   'data-testid': testId,
   'data-hashtag-testid': hashtagTestId,
   'data-profile-testid': profileTestId,
@@ -287,7 +293,7 @@ export function VideoFeed({
                   <div className="h-3 w-16 bg-muted rounded animate-pulse" />
                 </div>
               </div>
-              <div className="aspect-square w-full bg-gradient-to-br from-brand-light-green to-brand-light-green dark:from-brand-dark-green dark:to-brand-dark-green flex items-center justify-center">
+              <div className="aspect-square w-full bg-brand-light-green dark:bg-brand-dark-green flex items-center justify-center">
                 <div className="relative w-12 h-12">
                   <div className="absolute inset-0 border-4 border-brand-light-green dark:border-brand-dark-green rounded-full" />
                   <div className="absolute inset-0 border-4 border-transparent border-t-primary rounded-full animate-spin" />
@@ -505,6 +511,7 @@ export function VideoFeed({
               onCloseComments={handleCloseComments}
               onEnterFullscreen={() => handleEnterFullscreen(index)}
               onPlaybackStarted={() => handlePlaybackStarted(video)}
+              accent={accent}
               navigationContext={{
                 source: feedType,
                 hashtag,

@@ -5,13 +5,13 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useSeoMeta } from '@unhead/react';
-import { Trophy, Video, User, Clock, Calendar, CalendarDays, CalendarRange, Infinity as InfinityIcon } from 'lucide-react';
-import { getFunnelcakeBaseUrl } from '@/config/api';
+import { Trophy, VideoCamera as Video, User, Clock, Calendar, CalendarDots as CalendarDays, CalendarBlank as CalendarRange, Infinity as InfinityIcon } from '@phosphor-icons/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { nip19 } from 'nostr-tools';
+import { getFunnelcakeBaseUrl } from '@/config/api';
 
 type TimePeriod = 'alltime' | 'day' | 'week' | 'month' | 'year';
 type LeaderboardType = 'videos' | 'creators';
@@ -215,7 +215,7 @@ function VideoLeaderboard({ period }: { period: TimePeriod }) {
   if (!videos?.length) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        No videos found for this time period
+        Nothing on the leaderboard yet. Zoom out or check back soon.
       </div>
     );
   }
@@ -316,7 +316,7 @@ function CreatorLeaderboard({ period }: { period: TimePeriod }) {
   if (!creators?.length) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        No creators found
+        No creators here yet. The leaderboard is wide open.
       </div>
     );
   }

@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Flag, LogIn } from 'lucide-react';
+import { CircleNotch as Loader2, Flag, SignIn as LogIn } from '@phosphor-icons/react';
 import { useToast } from '@/hooks/useToast';
 import { ContentFilterReason, REPORT_REASON_LABELS } from '@/types/moderation';
 
@@ -50,8 +50,8 @@ export function ReportContentDialog({
   const handleSubmit = async () => {
     if (!eventId && !pubkey) {
       toast({
-        title: 'Error',
-        description: 'No content specified for reporting',
+        title: 'Nothing to report.',
+        description: 'Pick some content first.',
         variant: 'destructive',
       });
       return;
@@ -69,8 +69,8 @@ export function ReportContentDialog({
       });
 
       toast({
-        title: 'Report submitted',
-        description: 'Thank you for helping keep the community safe',
+        title: 'Report sent.',
+        description: 'Thanks for watching the community\'s back.',
       });
 
       // Reset and close
@@ -79,8 +79,8 @@ export function ReportContentDialog({
       onClose();
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to submit report. Please try again.',
+        title: 'Report didn\'t send.',
+        description: 'Hit a snag. Try again?',
         variant: 'destructive',
       });
     } finally {
@@ -160,7 +160,7 @@ export function ReportContentDialog({
               <Label htmlFor="details">Additional details (optional)</Label>
               <Textarea
                 id="details"
-                placeholder="Provide any additional context that might be helpful..."
+                placeholder="Anything else that might help..."
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 rows={3}

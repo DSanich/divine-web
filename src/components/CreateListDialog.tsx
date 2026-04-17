@@ -17,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, List, X } from 'lucide-react';
+import { CircleNotch as Loader2, List, X } from '@phosphor-icons/react';
 import { useToast } from '@/hooks/useToast';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 
@@ -55,8 +55,8 @@ export function CreateListDialog({ open, onClose }: CreateListDialogProps) {
   const handleCreate = async () => {
     if (!name.trim()) {
       toast({
-        title: 'Error',
-        description: 'Please enter a list name',
+        title: 'Name it.',
+        description: 'Lists need a name to exist.',
         variant: 'destructive',
       });
       return;
@@ -64,8 +64,8 @@ export function CreateListDialog({ open, onClose }: CreateListDialogProps) {
 
     if (!user) {
       toast({
-        title: 'Error',
-        description: 'You must be logged in to create lists',
+        title: 'Log in first.',
+        description: 'Sign in to start a list.',
         variant: 'destructive',
       });
       return;
@@ -87,8 +87,8 @@ export function CreateListDialog({ open, onClose }: CreateListDialogProps) {
       });
 
       toast({
-        title: 'List created',
-        description: `"${name}" has been created successfully`,
+        title: 'List created.',
+        description: `"${name}" is live. Start stashing.`,
       });
 
       // Navigate to the new list
@@ -96,8 +96,8 @@ export function CreateListDialog({ open, onClose }: CreateListDialogProps) {
       onClose();
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to create list. Please try again.',
+        title: 'Didn\'t make it.',
+        description: 'List creation hit a snag. Try again?',
         variant: 'destructive',
       });
     } finally {

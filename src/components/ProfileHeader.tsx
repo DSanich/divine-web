@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { UserPlus, UserCheck, CheckCircle, Pencil, Copy, MoreVertical, Flag, Play, Repeat, Loader2, XCircle, Link2, Code, Rss } from 'lucide-react';
+import { UserPlus, UserCheck, CheckCircle, PencilSimple as Pencil, Copy, DotsThreeVertical as MoreVertical, Flag, Play, Repeat, CircleNotch as Loader2, XCircle, LinkSimple as Link2, Code, Rss } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import { feedUrls } from '@/lib/feedUrls';
 import { useRssFeedAvailable } from '@/hooks/useRssFeedAvailable';
@@ -171,13 +171,13 @@ export function ProfileHeader({
       const npub = nip19.npubEncode(pubkey);
       await navigator.clipboard.writeText(npub);
       toast({
-        title: "Copied!",
-        description: "npub copied to clipboard",
+        title: "Copied.",
+        description: "npub's on your clipboard.",
       });
     } catch {
       toast({
-        title: "Copy failed",
-        description: "Failed to copy npub to clipboard",
+        title: "Copy hit a wall.",
+        description: "Your browser blocked clipboard access.",
         variant: "destructive",
       });
     }
@@ -363,14 +363,14 @@ export function ProfileHeader({
           <div className="flex-shrink-0 self-center sm:self-start flex gap-2">
             <Button
               onClick={handleFollowClick}
-              variant={isFollowing ? "outline" : "default"}
+              variant={isFollowing ? "outline" : "sticker"}
               size="sm"
               className="min-w-[100px]"
               data-testid="follow-button"
             >
               {isFollowing ? (
                 <>
-                  <UserCheck className="w-4 h-4 mr-2" />
+                  <UserCheck className="w-4 h-4 mr-2" weight="fill" />
                   Following
                 </>
               ) : (

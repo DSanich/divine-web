@@ -3,7 +3,7 @@
 
 import { Link, Navigate } from 'react-router-dom';
 import { useSeoMeta } from '@unhead/react';
-import { BarChart3, Video, Eye, Heart, Users, MessageCircle, Repeat2 } from 'lucide-react';
+import { ChartBar as BarChart3, VideoCamera as Video, Eye, Heart, Users, ChatCircle as MessageCircle, Repeat as Repeat2 } from '@phosphor-icons/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -180,9 +180,9 @@ function EmptyState() {
         <Video className="h-8 w-8 text-muted-foreground" />
       </div>
       <div>
-        <h3 className="text-lg font-semibold">No videos yet</h3>
+        <h3 className="text-lg font-semibold">Nothing to graph yet.</h3>
         <p className="mt-1 text-muted-foreground">
-          Post your first video to start seeing analytics here.
+          Drop your first loop — your numbers show up here.
         </p>
       </div>
     </div>
@@ -306,7 +306,7 @@ function AnalyticsDashboard({ pubkey }: { pubkey: string }) {
                       ))
                     ) : (
                       <p className="py-8 text-center text-muted-foreground">
-                        No engagement data yet
+                        No engagement to brag about yet.
                       </p>
                     )}
                   </CardContent>

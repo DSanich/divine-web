@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LifeBuoy, Plus, Search } from 'lucide-react';
+import { Lifebuoy as LifeBuoy, Plus, MagnifyingGlass as Search } from '@phosphor-icons/react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -153,7 +153,7 @@ function SupportRow({
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-3">
             <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
-            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
+            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary">
               {supportBadge}
             </span>
           </div>
@@ -203,13 +203,13 @@ export function MessagesPage() {
   const searchResults = searchUsersQuery.data || [];
 
   return (
-    <div className="min-h-full bg-[radial-gradient(circle_at_top,_hsl(var(--primary)/0.14),_transparent_42%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--background)))]">
+    <div className="min-h-full bg-brand-off-white dark:bg-brand-dark-green">
       <main className="container py-6">
         <div className="mx-auto max-w-4xl space-y-5">
           <section className="overflow-hidden rounded-[32px] border border-border/70 bg-card/80 px-5 py-6 shadow-[0_24px_60px_rgba(39,197,139,0.08)] backdrop-blur-sm">
             <div className="space-y-4">
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary">
                   {t('messages.badge')}
                 </div>
                 <div>

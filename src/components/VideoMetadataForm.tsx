@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { X, Hash, Loader2 } from 'lucide-react';
+import { X, Hash, CircleNotch as Loader2 } from '@phosphor-icons/react';
 import { useVideoUpload } from '@/hooks/useVideoUpload';
 import { usePublishVideo } from '@/hooks/usePublishVideo';
 import { Progress } from '@/components/ui/progress';
@@ -88,8 +88,8 @@ export function VideoMetadataForm({
   const handlePublish = async () => {
     if (!title.trim()) {
       toast({
-        title: 'Title Required',
-        description: 'Please add a title for your video',
+        title: 'Give it a title.',
+        description: 'Your loop needs a name before it goes live.',
         variant: 'destructive',
       });
       return;
@@ -112,16 +112,16 @@ export function VideoMetadataForm({
       });
 
       toast({
-        title: 'Video Published!',
-        description: 'Your vine has been published successfully',
+        title: 'Your loop is live.',
+        description: 'Let\'s go.',
       });
 
       onPublished();
     } catch (error) {
       console.error('Failed to publish video:', error);
       toast({
-        title: 'Publishing Failed',
-        description: error instanceof Error ? error.message : 'Failed to publish video',
+        title: 'Didn\'t make it out.',
+        description: error instanceof Error ? error.message : 'Publish hit a snag. Try again?',
         variant: 'destructive',
       });
     }
@@ -158,7 +158,7 @@ export function VideoMetadataForm({
             <Label htmlFor="title">Title *</Label>
             <Input
               id="title"
-              placeholder="Give your vine a title"
+              placeholder="Name your loop"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={100}
@@ -174,7 +174,7 @@ export function VideoMetadataForm({
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              placeholder="Add a description..."
+              placeholder="Say something about it..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -194,7 +194,7 @@ export function VideoMetadataForm({
                 <Hash className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="hashtags"
-                  placeholder="Add hashtags (press Enter)"
+                  placeholder="Tag it up (hit Enter)"
                   value={hashtagInput}
                   onChange={(e) => setHashtagInput(e.target.value)}
                   onKeyDown={handleHashtagKeyPress}

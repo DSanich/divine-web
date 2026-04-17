@@ -1,5 +1,5 @@
 import { useState, forwardRef } from 'react';
-import { Wallet, Plus, Trash2, Zap, Globe, WalletMinimal, CheckCircle, X } from 'lucide-react';
+import { Wallet, Plus, Trash as Trash2, Lightning as Zap, Globe, Wallet as WalletMinimal, CheckCircle, X } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -145,7 +145,7 @@ const WalletContent = forwardRef<HTMLDivElement, {
       {/* Connected Wallets List */}
       {connections.length === 0 ? (
         <div className="text-center py-6 text-muted-foreground">
-          <p className="text-sm">No wallets connected</p>
+          <p className="text-sm">No wallets yet. Plug one in to start zapping.</p>
         </div>
       ) : (
         <div className="space-y-2">

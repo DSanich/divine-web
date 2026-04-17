@@ -16,16 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Shield,
-  UserX,
-  Hash,
-  Type,
-  Plus,
-  Flag,
-  Trash2,
-  AlertCircle
-} from 'lucide-react';
+import { Shield, UserMinus as UserX, Hash, TextAa as Type, Plus, Flag, Trash as Trash2, WarningCircle as AlertCircle } from '@phosphor-icons/react';
 import { useToast } from '@/hooks/useToast';
 import { MuteType, REPORT_REASON_LABELS } from '@/types/moderation';
 import { genUserName } from '@/lib/genUserName';
@@ -387,7 +378,7 @@ export default function ModerationSettingsPage() {
                 )}
                 {muteList.length === 0 && !muteListLoading && (
                   <div className="text-muted-foreground mt-2">
-                    No filters active - all content will be shown
+                    No filters running — you're seeing everything.
                   </div>
                 )}
               </div>
@@ -513,7 +504,7 @@ export default function ModerationSettingsPage() {
                 </div>
               ) : (
                 <p className="text-center text-muted-foreground py-8">
-                  No muted users
+                  No one's on mute. Peaceful.
                 </p>
               )}
             </CardContent>
@@ -544,7 +535,7 @@ export default function ModerationSettingsPage() {
                 </div>
               ) : (
                 <p className="text-center text-muted-foreground py-8">
-                  No muted hashtags
+                  No hashtags muted yet.
                 </p>
               )}
             </CardContent>
@@ -575,7 +566,7 @@ export default function ModerationSettingsPage() {
                 </div>
               ) : (
                 <p className="text-center text-muted-foreground py-8">
-                  No muted keywords
+                  No muted keywords. Your feed is raw.
                 </p>
               )}
             </CardContent>

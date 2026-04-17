@@ -22,7 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { MessageSquare, ChevronDown, ChevronRight, MoreHorizontal, Flag, Volume2, Trash2, CornerDownRight } from 'lucide-react';
+import { Chat as MessageSquare, CaretDown as ChevronDown, CaretRight as ChevronRight, DotsThree as MoreHorizontal, Flag, SpeakerHigh as Volume2, Trash as Trash2, ArrowBendDownRight as CornerDownRight } from '@phosphor-icons/react';
 import { formatDistanceToNow } from 'date-fns';
 import { genUserName } from '@/lib/genUserName';
 import { MuteType } from '@/types/moderation';
@@ -82,8 +82,8 @@ export function Comment({ root, comment, depth = 0, maxDepth = 3, limit, parentC
   const handleMuteUser = () => {
     if (!user) {
       toast({
-        title: 'Login required',
-        description: 'You must be logged in to mute users',
+        title: 'Log in first.',
+        description: 'You need to be signed in to mute people.',
         variant: 'destructive',
       });
       return;
@@ -96,14 +96,14 @@ export function Comment({ root, comment, depth = 0, maxDepth = 3, limit, parentC
     }, {
       onSuccess: () => {
         toast({
-          title: 'User muted',
-          description: `${displayName} has been added to your mute list`,
+          title: 'Muted.',
+          description: `${displayName} is off your feed.`,
         });
       },
       onError: () => {
         toast({
-          title: 'Error',
-          description: 'Failed to mute user. Please try again.',
+          title: 'Mute didn\'t land.',
+          description: 'Couldn\'t save the mute. Try again?',
           variant: 'destructive',
         });
       }
@@ -260,7 +260,7 @@ export function Comment({ root, comment, depth = 0, maxDepth = 3, limit, parentC
             root={root}
             reply={comment}
             onSuccess={() => setShowReplyForm(false)}
-            placeholder="Write a reply..."
+            placeholder="Write back..."
             compact
           />
         </div>
