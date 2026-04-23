@@ -24,11 +24,11 @@ export function useLoggedInAccounts() {
   const hasExtensionLogin = useMemo(() => (
     logins.some((login) => login.type === 'extension')
   ), [logins]);
-  const isNip07Available = useNip07Availability(hasExtensionLogin);
+  const { isAvailable: isNip07Available } = useNip07Availability(hasExtensionLogin);
   const activeLogins = useMemo(
     () => logins.filter((login) => {
       if (login.type === 'extension' && !isNip07Available) {
-        return false;
+        return Boolean(login.pubkey);
       }
 
       try {

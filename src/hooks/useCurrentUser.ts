@@ -23,7 +23,8 @@ export function useCurrentUser() {
   const hasExtensionLogin = useMemo(() => (
     logins.some((login) => login.type === 'extension')
   ), [logins]);
-  const isNip07Available = useNip07Availability(hasExtensionLogin);
+  const { isAvailable: isNip07Available, isRestoring: isNip07Restoring } = useNip07Availability(hasExtensionLogin);
+  const isAuthRestoring = hasExtensionLogin && isNip07Restoring;
   const jwtSigner = useMemo(() => (
     token ? new DivineJWTSigner({ token }) : null
   ), [token]);
@@ -65,6 +66,7 @@ export function useCurrentUser() {
 
     for (const login of logins) {
       if (login.type === 'extension' && !isNip07Available) {
+        users.push({ pubkey: login.pubkey });
         continue;
       }
 
@@ -102,6 +104,7 @@ export function useCurrentUser() {
     user,
     users,
     signer,
+    isAuthRestoring,
     ...author.data,
   };
 }
