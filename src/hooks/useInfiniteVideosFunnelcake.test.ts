@@ -105,7 +105,18 @@ describe('useInfiniteVideosFunnelcake', () => {
     const enrichedVideos = [{ ...transformedVideos[0], ageRestricted: true }];
 
     window.__DIVINE_FEED_TYPE__ = 'classics';
-    window.__DIVINE_FEED__ = { videos: [{}], has_more: false, next_cursor: undefined };
+    window.__DIVINE_FEED__ = {
+      videos: [{
+        id: 'raw-edge-id',
+        pubkey: 'p'.repeat(64),
+        created_at: 1700000200,
+        kind: 34236,
+        d_tag: 'raw-edge-d-tag',
+        video_url: 'https://media.divine.video/raw-edge-hash',
+      }],
+      has_more: false,
+      next_cursor: undefined,
+    };
     mockTransformToVideoPage.mockReturnValueOnce({
       videos: transformedVideos,
       nextCursor: undefined,

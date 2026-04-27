@@ -64,7 +64,7 @@ export function useVideoPrefetch(
       if (!shouldSkipProtectedPrefetch(video.videoUrl, video.ageRestricted)) {
         urlsToPrefetch.push({ url: video.videoUrl, as: 'video' });
       }
-      if (!shouldSkipProtectedPrefetch(video.thumbnailUrl, video.ageRestricted)) {
+      if (video.thumbnailUrl && !shouldSkipProtectedPrefetch(video.thumbnailUrl, video.ageRestricted)) {
         urlsToPrefetch.push({ url: video.thumbnailUrl, as: 'image' });
       }
     }
