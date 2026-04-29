@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useAuthor } from '@/hooks/useAuthor';
 import { useNostrPublish } from '@/hooks/useNostrPublish';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) =
   const queryClient = useQueryClient();
 
   const { user, metadata } = useCurrentUser();
+  const authorQuery = useAuthor(user?.pubkey);
   const { mutateAsync: publishEvent, isPending } = useNostrPublish();
   const { mutateAsync: uploadFile, isPending: isUploading } = useUploadFile();
   const { toast } = useToast();
@@ -87,6 +89,15 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) =
       toast({
         title: 'Log in first.',
         description: 'You need to be signed in to update your profile.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!authorQuery.isSuccess) {
+      toast({
+        title: 'Hang tight.',
+        description: 'Still loading your profile. Try again in a sec.',
         variant: 'destructive',
       });
       return;
@@ -242,13 +253,29 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) =
           type="submit"
           variant="sticker"
           className="w-full md:w-auto"
-          disabled={isPending || isUploading}
+          disabled={isPending || isUploading || !authorQuery.isSuccess}
         >
-          {(isPending || isUploading) && (
+          {(isPending || isUploading || authorQuery.isPending) && (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           )}
-          Save Profile
+          {authorQuery.isPending ? 'Loading your profile…' : 'Save Profile'}
         </Button>
+        {authorQuery.isError && (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-destructive">
+              Couldn't load your current profile yet.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full md:w-auto"
+              onClick={() => void authorQuery.refetch()}
+              disabled={authorQuery.isPending || isPending || isUploading}
+            >
+              Retry loading profile
+            </Button>
+          </div>
+        )}
       </form>
     </Form>
   );
